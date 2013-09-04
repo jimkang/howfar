@@ -1,0 +1,115 @@
+<html>
+<head>
+  <title>How far to Clark Street station?</title>
+  
+  
+  <style type="text/css">
+    body {
+      color: #444;
+      font-family: Georgia, serif;
+      font-size: 20px;
+      margin: 2em;
+    }
+
+    input {
+      width: 100%;
+      font-size: 1.5em;
+    }
+
+    button {
+      font-size: 1.2em;
+      padding: 10px;
+      border-radius: 8px;
+      background-color: #2c9;
+    }
+
+    .response-field {
+      padding: 1em;
+      font-size: 2em;
+    }
+  </style>
+  
+</head>
+
+<body>
+  
+  <center>
+     <p>
+      Address: <input id="address" type="text" placeholder="e.g. 1600 Pennsylvania, Washington, DC"></input>
+    </p>
+
+    <p>
+      <button id="howfar-button" onClick="findDistance();">How far to Clark Street station?</button>
+    </p>
+
+    <p>
+      <div id="result" class="response-field"></div>
+    </p>
+  </center>
+  
+  <script>
+  
+  var apiBaseURL = 'http://maps.googleapis.com/maps/api/geocode/json?address=';
+  var startLocation = {
+    lat: 40.6974,
+    lng: -73.9931
+  };
+
+  function findDistance() {
+    var address = document.getElementById('address').value;
+    var resultField = document.getElementById('result');
+    getGeocode(address, function gotGeocode(error, geocode) {
+      if (error) {
+        resultField.innerHTML = error;
+      }
+      else {
+        var distance = calculateDistanceBetweenCoords(
+          startLocation.lat, startLocation.lng, geocode.lat, geocode.lng);
+        resultField.innerHTML = kmToMiles(distance).toFixed(2) + ' miles';
+      }
+    })
+  }
+
+  function kmToMiles(km) {
+    return km * 0.621371;
+  }
+
+  function getGeocode(address, done) {
+    var geocodingURL = apiBaseURL + encodeURI(address) + '&sensor=false';
+
+    var xhr = new XMLHttpRequest();
+    xhr.onreadystatechange = function requestDone() {
+      if (xhr.readyState === 4) {
+        var responseObject = JSON.parse(xhr.response);
+        if (responseObject.results.length > 0) {
+          done(null, responseObject.results[0].geometry.location);
+        }
+        else {
+          done('Couldn\'t get geocode.', null);
+        }
+      }
+    };
+    xhr.open('GET', geocodingURL, true);
+    xhr.send();
+  };
+
+  function calculateDistanceBetweenCoords(lat1, lon1, lat2, lon2) {
+    // http://www.movable-type.co.uk/scripts/latlong.html
+    var R = 6371; // km
+    var dLat = (lat2-lat1) * Math.PI / 180;
+    var dLon = (lon2-lon1) * Math.PI / 180;
+    var lat1 = lat1 * Math.PI / 180;
+    var lat2 = lat2 * Math.PI / 180;
+
+    var a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+            Math.sin(dLon/2) * Math.sin(dLon/2) * Math.cos(lat1) * Math.cos(lat2); 
+    var c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a)); 
+    var d = R * c;
+
+    return d;
+  }
+  
+  </script>
+</body>
+
+</html>
